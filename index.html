@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telesalud - Herramienta de Autoevaluación de Competencias OPS</title>
+    <!-- CSS Estilos -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Carga de las preguntas y la base de datos local -->
+    <script src="questions.js"></script>
+</head>
+<body>
+
+    <!-- Cabecera Principal -->
+    <header>
+        <div class="logo-container">
+            <img src="logo_sena.png" alt="SENA Logo" class="logo-img">
+            <h1>Autoevaluación de Competencias en Telesalud</h1>
+        </div>
+        <p>Herramienta Oficial de la Organización Panamericana de la Salud (OPS)</p>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main>
+        
+        <!-- PANTALLA 1: Registro e Introducción -->
+        <section id="screen-welcome" class="card fade-in">
+            <h2>Bienvenido al Cuestionario Digital</h2>
+            <p class="intro-text" style="margin-top: 15px;">
+                Esta herramienta interactiva le permitirá realizar un ejercicio introspectivo y crítico acerca de su grado de conocimiento y dominio de las competencias esenciales para los servicios de telesalud, de acuerdo a la escala propuesta por la **OPS/OMS**.
+            </p>
+            
+            <div class="intro-text" style="background-color: var(--primary-light); padding: 15px; border-radius: var(--radius-sm); border-left: 4px solid var(--primary); margin-bottom: 25px;">
+                <strong>Instrucciones de valoración:</strong>
+                <ul style="margin-top: 8px; font-size: 0.95rem;">
+                    <li><strong>Nulo (1):</strong> No he desarrollado la competencia y requiero asesoría para ello.</li>
+                    <li><strong>Inicial (2):</strong> Tengo algunos conocimientos y habilidades que me permiten adquirir la competencia.</li>
+                    <li><strong>Intermedio (3):</strong> Domino la competencia con algunos desafíos.</li>
+                    <li><strong>Avanzado (4):</strong> Domino la competencia.</li>
+                    <li><strong>Muy avanzado (5):</strong> Domino la competencia, puedo enseñarla y transferirla para resolver problemas.</li>
+                    <li><strong>No aplica (N/A):</strong> Esta competencia es específica de otro personal del equipo (suma 0 puntos).</li>
+                </ul>
+            </div>
+
+            <!-- Formulario de Datos Personales -->
+            <form id="form-registration" onsubmit="event.preventDefault(); startAssessment();">
+                <h3 style="color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid var(--border-color); padding-bottom: 5px;">Datos de Registro del Profesional</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reg-name">Nombre Completo *</label>
+                        <input type="text" id="reg-name" class="form-control" placeholder="Ej. Juan Pérez" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-id">Número de Identificación *</label>
+                        <input type="text" id="reg-id" class="form-control" placeholder="C.C. o documento de identidad" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reg-phone">Teléfono de Contacto *</label>
+                        <input type="tel" id="reg-phone" class="form-control" placeholder="Ej. +57 300 123 4567" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">Correo Electrónico *</label>
+                        <input type="email" id="reg-email" class="form-control" placeholder="correo@institucion.edu.co" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reg-position">Cargo / Función *</label>
+                        <input type="text" id="reg-position" class="form-control" placeholder="Ej. Enfermero, Médico General, Coordinador" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-institution">Institución de Salud *</label>
+                        <input type="text" id="reg-institution" class="form-control" placeholder="Ej. Hospital Regional, Clinica SENA" required>
+                    </div>
+                </div>
+
+                <div style="text-align: right; margin-top: 10px;">
+                    <button type="submit" id="btn-start" class="btn btn-primary">
+                        Comenzar Autoevaluación ➔
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- PANTALLA 2: El Cuestionario Dinámico (Wizard por Dominios) -->
+        <section id="screen-questionnaire" class="hidden">
+            <!-- Barra de Avance Global -->
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span id="progress-domain-title">Dominio: Conocimiento General</span>
+                    <span id="progress-percent">0% Completado</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="progress-fill" class="progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <!-- Tarjeta Cabecera del Dominio -->
+            <div id="domain-card-header" class="domain-header-card">
+                <h2 id="domain-name">Nombre del Dominio</h2>
+                <p id="domain-desc">Descripción detallada del dominio correspondiente.</p>
+            </div>
+
+            <!-- Tarjeta Cuerpo del Cuestionario -->
+            <div class="card domain-content-card">
+                <div id="questions-container">
+                    <!-- Las preguntas se cargarán dinámicamente aquí -->
+                </div>
+
+                <!-- Botones de Navegación -->
+                <div class="navigation-buttons">
+                    <button id="btn-prev" class="btn btn-secondary" onclick="prevDomain()">
+                        ← Anterior
+                    </button>
+                    <button id="btn-next" class="btn btn-primary" onclick="nextDomain()">
+                        Siguiente Dominio →
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 3: Resultados, Dashboard y Envío Final -->
+        <section id="screen-results" class="card fade-in hidden">
+            <div class="results-header">
+                <h2>Resultados de su Autoevaluación</h2>
+                <p style="color: var(--text-muted);">Análisis de su nivel de competencias profesionales en telemedicina</p>
+                
+                <div class="results-badge-container">
+                    <div class="score-number" id="result-score-num">0</div>
+                    <div class="score-max">de 215 puntos posibles</div>
+                    <div id="result-level-badge" class="results-badge badge-intermedio">Intermedio</div>
+                </div>
+            </div>
+
+            <!-- Información Personal Registrada -->
+            <div style="background-color: #fafbfd; padding: 15px; border-radius: var(--radius-sm); border: 1px dashed var(--border-color); margin-bottom: 25px; font-size: 0.9rem;">
+                <h4 style="color: var(--primary); margin-bottom: 8px;">Ficha del Evaluado:</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px;">
+                    <div><strong>Nombre:</strong> <span id="summary-name"></span></div>
+                    <div><strong>Identificación:</strong> <span id="summary-id"></span></div>
+                    <div><strong>Correo:</strong> <span id="summary-email"></span></div>
+                    <div><strong>Teléfono:</strong> <span id="summary-phone"></span></div>
+                    <div><strong>Cargo:</strong> <span id="summary-position"></span></div>
+                    <div><strong>Institución:</strong> <span id="summary-institution"></span></div>
+                </div>
+            </div>
+
+            <!-- Caja de Interpretación -->
+            <div class="interpretation-box" id="result-interpretation">
+                Cargando análisis...
+            </div>
+
+            <!-- Recomendaciones -->
+            <div class="recommendations-container" style="margin-bottom: 30px;">
+                <h3>Acciones recomendadas para fortalecer sus competencias:</h3>
+                <ul class="recommendations-list" id="result-recommendations">
+                    <!-- Se cargan dinámicamente -->
+                </ul>
+            </div>
+
+            <!-- Dashboard de Desempeño por Dominios (Gráfico de barras interactivo) -->
+            <div class="chart-container">
+                <h3 class="chart-title">Desempeño Detallado por Dominios de Competencias</h3>
+                <div class="chart-wrapper" id="chart-bars-container">
+                    <!-- Las barras por dominio se renderizan dinámicamente -->
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top: 25px; margin-top: 20px; display: flex; flex-direction: column; gap: 15px;">
+                <!-- Estado del envío automático a OneDrive -->
+                <p id="cloud-status" style="font-size: 1rem; color: #166534; font-weight: 600; text-align: center; margin-bottom: 10px; display: none;">
+                    ☁️ Resultados registrados automáticamente en OneDrive (SENA)
+                </p>
+
+                <!-- Botones de Acción para el usuario final -->
+                <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 10px;">
+                    <button class="btn btn-primary" onclick="window.print()">
+                        🖨️ Imprimir / Guardar en PDF
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pantalla de Carga de Envío Automático -->
+        <div id="screen-loading" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255,255,255,0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;">
+            <div class="spinner spinner-dark" style="width: 50px; height: 50px; border-width: 5px;"></div>
+            <h3 style="color: var(--primary); font-weight: 700; font-size: 1.4rem;">Guardando respuestas de forma segura...</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Por favor, espere un momento. Registrando evaluación en OneDrive institucional.</p>
+        </div>
+
+    </main>
+
+    <!-- Pie de Página -->
+    <footer>
+        <p>© 2026 - Herramienta de Autoevaluación de Competencias del Personal de Salud en Telesalud.</p>
+        <p>Adaptado conforme a las especificaciones de la Organización Panamericana de la Salud (OPS/OMS) para el SENA.</p>
+    </footer>
+
+    <!-- JS de la Lógica de Negocio -->
+    <script src="app.js"></script>
+</body>
+</html>
