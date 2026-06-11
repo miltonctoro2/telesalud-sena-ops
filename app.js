@@ -5,7 +5,8 @@
 // 1. CONFIGURACIÓN DEL WEBHOOK DE POWER AUTOMATE
 // Coloca aquí la dirección (URL) del Webhook generado por Power Automate.
 // Cuando configures tu flujo en la nube, reemplaza este texto entre comillas con la URL del flujo.
-const POWER_AUTOMATE_WEBHOOK_URL = "";
+const POWER_AUTOMATE_WEBHOOK_URL = "https://defaultcbc2c3812f2e4d9391d1506c9316ac.e7.environment.api.powerplatform.
+  com:443/powerautomate/automations/direct/workflows/a6e4de8b4a1f440f98cb86312ff25054/triggers/manual/paths/invoke?api-version=1";
 
 // 2. ESTADO GENERAL DE LA APLICACIÓN
 const state = {
