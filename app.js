@@ -2,10 +2,11 @@
  * Lógica de Negocio de la Herramienta de Autoevaluación de Telesalud (OPS/SENA)
  */
 
-// 1. CONFIGURACIÓN DE CONEXIÓN (SUPABASE Y POWER AUTOMATE / ONEDRIVE)
+// 1. CONFIGURACIÓN DE CONEXIÓN CON SUPABASE Y PANEL DE ADMINISTRACIÓN
 const SUPABASE_URL = "https://asemoqatiyguzxviljkm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_t8s31EalnbEsIB5TOCA3KA_fBkkmBnZ";
-const POWER_AUTOMATE_URL = "https://defaultcbc2c3812f2e4d9391d1506c9316ac.e7.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a6e4de8b4a1f440f98cb86312ff25054/triggers/manual/paths/invoke?api-version=1";
+const POWER_AUTOMATE_URL = ""; // Dejar vacío para usar únicamente Supabase
+const ADMIN_PASSWORD = "SenaOps2026"; // Contraseña para ingresar al panel administrador (?admin=true)
 
 // 2. ESTADO GENERAL DE LA APLICACIÓN
 const state = {
@@ -26,6 +27,12 @@ const state = {
 document.addEventListener("DOMContentLoaded", () => {
     // Inicializar controles de interfaz
     document.getElementById("btn-prev").disabled = true;
+
+    // Verificar si es vista de administrador
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("admin") === "true") {
+        showAdminPanel();
+    }
 });
 
 // 3. FLUJO DE NAVEGACIÓN
@@ -482,3 +489,172 @@ function submitAndShowResults() {
 }
 
 // Fin de la lógica de autoevaluación.
+
+// 6. PANEL DE ADMINISTRADOR
+function showAdminPanel() {
+    document.getElementById("screen-welcome").classList.add("hidden");
+    document.getElementById("screen-questionnaire").classList.add("hidden");
+    document.getElementById("screen-results").classList.add("hidden");
+    document.getElementById("screen-admin").classList.remove("hidden");
+}
+
+function loginAdmin() {
+    const pwdInput = document.getElementById("admin-password").value;
+    const errorEl = document.getElementById("admin-login-error");
+    
+    if (pwdInput === ADMIN_PASSWORD) {
+        errorEl.style.display = "none";
+        document.getElementById("admin-login-box").classList.add("hidden");
+        document.getElementById("admin-content-box").classList.remove("hidden");
+        loadAdminData();
+    } else {
+        errorEl.innerText = "Contraseña incorrecta. Por favor intente de nuevo.";
+        errorEl.style.display = "block";
+    }
+}
+
+function logoutAdmin() {
+    // Redirigir al inicio para limpiar el parámetro ?admin=true de la URL
+    window.location.href = window.location.origin + window.location.pathname;
+}
+
+function loadAdminData() {
+    const tableBody = document.getElementById("admin-table-body");
+    tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px;">Cargando respuestas desde la base de datos...</td></tr>`;
+
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+        tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--color-nulo);">Error: Credenciales de Supabase no configuradas.</td></tr>`;
+        return;
+    }
+
+    fetch(`${SUPABASE_URL}/rest/v1/respuestas?order=created_at.desc`, {
+        method: "GET",
+        headers: {
+            "apikey": SUPABASE_KEY,
+            "Authorization": `Bearer ${SUPABASE_KEY}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Error al consultar la base de datos");
+        }
+        return response.json();
+    })
+    .then(data => {
+        state.adminRecords = data; // Almacenar para la descarga CSV
+        document.getElementById("admin-counter").innerText = data.length;
+
+        if (data.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px;">No se encontraron respuestas registradas aún.</td></tr>`;
+            return;
+        }
+
+        tableBody.innerHTML = "";
+        data.forEach(record => {
+            const tr = document.createElement("tr");
+            
+            // Formatear fecha
+            const dateStr = record.created_at 
+                ? new Date(record.created_at).toLocaleString("es-CO", { timeZone: "America/Bogota" })
+                : "Sin fecha";
+
+            tr.innerHTML = `
+                <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${dateStr}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border-color); font-weight: 600;">${record.nombre_completo || ""}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${record.identificacion || ""}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${record.cargo || ""}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${record.institucion || ""}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border-color); font-weight: 700; color: var(--primary);">${record.puntaje_total || 0}</td>
+                <td style="padding: 12px; border-bottom: 1px solid var(--border-color);"><span style="padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.8rem; background-color: var(--primary-light); color: var(--primary);">${record.nivel_desempeno || ""}</span></td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    })
+    .catch(error => {
+        console.error("Error al cargar datos de administración:", error);
+        tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--color-nulo);">Error de conexión: No se pudieron cargar los datos de Supabase.</td></tr>`;
+    });
+}
+
+function downloadAdminExcel() {
+    if (!state.adminRecords || state.adminRecords.length === 0) {
+        alert("No hay registros para descargar.");
+        return;
+    }
+
+    // Definir los encabezados en el orden exacto del Excel original (del script de python)
+    const headers = [
+        "fechaEnvio",
+        "nombreCompleto",
+        "identificacion",
+        "telefono",
+        "correo",
+        "cargo",
+        "institucion",
+        "puntajeTotal",
+        "nivelDesempeno"
+    ];
+    
+    // Agregar encabezados de dominios 1-8
+    for (let i = 1; i <= 8; i++) {
+        headers.push(`dominio_${i}_puntaje`);
+        headers.push(`dominio_${i}_porcentaje`);
+    }
+    
+    // Agregar encabezados de preguntas 1-43
+    for (let i = 1; i <= 43; i++) {
+        headers.push(`pregunta_${i}`);
+    }
+
+    // Generar las filas del archivo CSV
+    const rows = state.adminRecords.map(record => {
+        const localDate = record.created_at 
+            ? new Date(record.created_at).toLocaleString("es-CO", { timeZone: "America/Bogota" })
+            : "";
+            
+        const rowValues = [
+            localDate,
+            record.nombre_completo || "",
+            record.identificacion || "",
+            record.telefono || "",
+            record.correo || "",
+            record.cargo || "",
+            record.institucion || "",
+            record.puntaje_total !== undefined ? record.puntaje_total : "",
+            record.nivel_desempeno || ""
+        ];
+
+        // Añadir puntajes y porcentajes por dominio
+        for (let i = 1; i <= 8; i++) {
+            rowValues.push(record[`dominio_${i}_puntaje`] !== undefined ? record[`dominio_${i}_puntaje`] : "");
+            rowValues.push(record[`dominio_${i}_porcentaje`] !== undefined ? record[`dominio_${i}_porcentaje`] : "");
+        }
+
+        // Añadir respuestas de las 43 preguntas
+        for (let i = 1; i <= 43; i++) {
+            rowValues.push(record[`pregunta_${i}`] || "");
+        }
+
+        // Escapar comillas y punto y coma (delimitador preferido en España/América Latina para Excel)
+        return rowValues.map(val => {
+            let str = String(val).replace(/"/g, '""');
+            if (str.includes(";") || str.includes("\n") || str.includes('"')) {
+                return `"${str}"`;
+            }
+            return str;
+        }).join(";");
+    });
+
+    // Añadir el BOM de UTF-8 al inicio (\uFEFF) para que Excel reconozca las tildes y la eñe
+    const csvContent = "\uFEFF" + [headers.join(";"), ...rows].join("\n");
+
+    // Descargar el archivo
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Reporte_Autoevaluacion_Telesalud_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
