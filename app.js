@@ -2,11 +2,10 @@
  * Lógica de Negocio de la Herramienta de Autoevaluación de Telesalud (OPS/SENA)
  */
 
-// 1. CONFIGURACIÓN DEL WEBHOOK DE POWER AUTOMATE
-// Coloca aquí la dirección (URL) del Webhook generado por Power Automate.
-// Cuando configures tu flujo en la nube, reemplaza este texto entre comillas con la URL del flujo.
-const POWER_AUTOMATE_WEBHOOK_URL = "https://defaultcbc2c3812f2e4d9391d1506c9316ac.e7.environment.api.powerplatform.
-  com:443/powerautomate/automations/direct/workflows/a6e4de8b4a1f440f98cb86312ff25054/triggers/manual/paths/invoke?api-version=1";
+// 1. CONFIGURACIÓN DE CONEXIÓN (SUPABASE Y POWER AUTOMATE / ONEDRIVE)
+const SUPABASE_URL = "https://asemoqatiyguzxviljkm.supabase.co";
+const SUPABASE_KEY = "sb_publishable_t8s31EalnbEsIB5TOCA3KA_fBkkmBnZ";
+const POWER_AUTOMATE_URL = "https://defaultcbc2c3812f2e4d9391d1506c9316ac.e7.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a6e4de8b4a1f440f98cb86312ff25054/triggers/manual/paths/invoke?api-version=1";
 
 // 2. ESTADO GENERAL DE LA APLICACIÓN
 const state = {
@@ -31,21 +30,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // 3. FLUJO DE NAVEGACIÓN
 function startAssessment() {
-    // Captura datos del formulario de registro
-    state.userInfo.name = document.getElementById("reg-name").value.trim();
-    state.userInfo.id = document.getElementById("reg-id").value.trim();
-    state.userInfo.phone = document.getElementById("reg-phone").value.trim();
-    state.userInfo.email = document.getElementById("reg-email").value.trim();
-    state.userInfo.position = document.getElementById("reg-position").value.trim();
-    state.userInfo.institution = document.getElementById("reg-institution").value.trim();
+    try {
+        // Captura datos del formulario de registro
+        state.userInfo.name = document.getElementById("reg-name").value.trim();
+        state.userInfo.id = document.getElementById("reg-id").value.trim();
+        state.userInfo.phone = document.getElementById("reg-phone").value.trim();
+        state.userInfo.email = document.getElementById("reg-email").value.trim();
+        state.userInfo.position = document.getElementById("reg-position").value.trim();
+        state.userInfo.institution = document.getElementById("reg-institution").value.trim();
 
-    // Oculta pantalla de bienvenida y muestra cuestionario
-    document.getElementById("screen-welcome").classList.add("hidden");
-    document.getElementById("screen-questionnaire").classList.remove("hidden");
+        // Oculta pantalla de bienvenida y muestra cuestionario
+        document.getElementById("screen-welcome").classList.add("hidden");
+        document.getElementById("screen-questionnaire").classList.remove("hidden");
 
-    // Renderiza el primer dominio
-    state.currentDomainIndex = 0;
-    renderCurrentDomain();
+        // Renderiza el primer dominio
+        state.currentDomainIndex = 0;
+        renderCurrentDomain();
+    } catch (error) {
+        alert("Error al iniciar la autoevaluación: " + error.message + "\n" + error.stack);
+    }
 }
 
 function renderCurrentDomain() {
@@ -194,7 +197,7 @@ function nextDomain() {
     const isLastDomain = (state.currentDomainIndex === state.domainKeys.length - 1);
     
     if (isLastDomain) {
-        // Si es el último, enviar a OneDrive en segundo plano y luego mostrar resultados
+        // Si es el último, enviar a Supabase en segundo plano y luego mostrar resultados
         submitAndShowResults();
     } else {
         // Avanzar al siguiente dominio
@@ -316,13 +319,13 @@ function renderDomainCharts() {
     });
 }
 
-// 5. INTEGRACIÓN CON POWER AUTOMATE (ENVÍO AUTOMÁTICO)
+// 5. INTEGRACIÓN CON NUBE (SUPABASE Y POWER AUTOMATE / ONEDRIVE)
 function submitAndShowResults() {
     // Recopilar respuestas estructuradas por pregunta
     const detailedAnswers = {};
     preguntas.forEach(q => {
         const val = state.answers[q.id];
-        detailedAnswers[`pregunta_${q.id}`] = (val === 0) ? "N/A" : val;
+        detailedAnswers[`pregunta_${q.id}`] = (val === 0) ? "N/A" : String(val);
     });
 
     // Calcular puntaje total y nivel
@@ -345,9 +348,24 @@ function submitAndShowResults() {
         scoresPorDominio[`dominio_${domainId}_porcentaje`] = Math.round((domScore / (domainQuestions.length * 5)) * 100) || 0;
     });
 
-    // Armar el objeto completo que se enviará
-    const payload = {
-        fechaEnvio: new Date().toISOString(),
+    // 1. Armar el objeto para Supabase (coincidiendo con las columnas snake_case de la DB)
+    const supabasePayload = {
+        nombre_completo: state.userInfo.name,
+        identificacion: state.userInfo.id,
+        telefono: state.userInfo.phone,
+        correo: state.userInfo.email,
+        cargo: state.userInfo.position,
+        institucion: state.userInfo.institution,
+        puntaje_total: totalScore,
+        nivel_desempeno: finalLevel,
+        ...scoresPorDominio,
+        ...detailedAnswers
+    };
+
+    // 2. Armar el objeto para Power Automate (coincidiendo con las columnas camelCase y fechaEnvio)
+    const fechaEnvio = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
+    const powerAutomatePayload = {
+        fechaEnvio: fechaEnvio,
         nombreCompleto: state.userInfo.name,
         identificacion: state.userInfo.id,
         telefono: state.userInfo.phone,
@@ -360,55 +378,96 @@ function submitAndShowResults() {
         ...detailedAnswers
     };
 
-    // Si la URL del webhook no está configurada, pasar directamente a modo local (para pruebas)
-    if (!POWER_AUTOMATE_WEBHOOK_URL) {
-        console.warn("Power Automate Webhook URL no configurada. Mostrando resultados en modo local.");
-        
-        // Mostrar estado de advertencia en pantalla
-        const statusEl = document.getElementById("cloud-status");
-        if (statusEl) {
-            statusEl.innerText = "⚠️ Modo local de prueba: configure el flujo en app.js para guardar en la nube.";
-            statusEl.style.color = "var(--color-inicial)";
-            statusEl.style.display = "block";
-        }
-        
-        calculateAndShowResults();
-        return;
-    }
-
     // Mostrar pantalla de carga
     const loadingScreen = document.getElementById("screen-loading");
     if (loadingScreen) loadingScreen.classList.remove("hidden");
 
-    // Realizar la petición HTTP POST
-    fetch(POWER_AUTOMATE_WEBHOOK_URL, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error("Respuesta del servidor incorrecta");
-        }
-        
-        // Mostrar estado de éxito en pantalla
+    // Crear promesas de envío
+    const sendPromises = [];
+
+    // Promesa de Power Automate (OneDrive)
+    if (POWER_AUTOMATE_URL) {
+        sendPromises.push(
+            fetch(POWER_AUTOMATE_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(powerAutomatePayload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Error en la respuesta de Power Automate");
+                }
+                return { service: "OneDrive", success: true };
+            })
+            .catch(error => {
+                console.error("Error al enviar a OneDrive:", error);
+                return { service: "OneDrive", success: false, error: error };
+            })
+        );
+    }
+
+    // Promesa de Supabase
+    if (SUPABASE_URL && SUPABASE_KEY) {
+        sendPromises.push(
+            fetch(`${SUPABASE_URL}/rest/v1/respuestas`, {
+                method: "POST",
+                headers: {
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal"
+                },
+                body: JSON.stringify(supabasePayload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Error en la respuesta de Supabase");
+                }
+                return { service: "Supabase", success: true };
+            })
+            .catch(error => {
+                console.error("Error al enviar a Supabase:", error);
+                return { service: "Supabase", success: false, error: error };
+            })
+        );
+    }
+
+    // Esperar a que terminen ambos envíos
+    Promise.all(sendPromises)
+    .then(results => {
+        const oneDriveResult = results.find(r => r.service === "OneDrive");
+        const supabaseResult = results.find(r => r.service === "Supabase");
+
         const statusEl = document.getElementById("cloud-status");
         if (statusEl) {
-            statusEl.innerText = "☁️ Resultados registrados exitosamente en tu OneDrive institucional SENA";
-            statusEl.style.color = "var(--color-avanzado)";
             statusEl.style.display = "block";
+            
+            const odSuccess = oneDriveResult ? oneDriveResult.success : false;
+            const sbSuccess = supabaseResult ? supabaseResult.success : false;
+
+            if (odSuccess && sbSuccess) {
+                statusEl.innerText = "☁️ Resultados guardados exitosamente en tu Excel de OneDrive y en la base de datos de Supabase.";
+                statusEl.style.color = "var(--color-avanzado)";
+            } else if (odSuccess && !sbSuccess) {
+                statusEl.innerText = "☁️ Resultados registrados exitosamente en tu Excel de OneDrive (error al guardar en base de datos secundaria).";
+                statusEl.style.color = "var(--color-intermedio)";
+            } else if (!odSuccess && sbSuccess) {
+                statusEl.innerText = "☁️ Resultados registrados en la base de datos central de Supabase (error al actualizar el archivo Excel de OneDrive).";
+                statusEl.style.color = "var(--color-intermedio)";
+            } else {
+                statusEl.innerText = "❌ No se pudo guardar en la nube (error de conexión). Por favor, imprima esta página para no perder sus resultados.";
+                statusEl.style.color = "var(--color-nulo)";
+                alert("Hubo un problema de conexión al guardar sus datos en la nube. Sus resultados se mostrarán en pantalla, pero le recomendamos imprimir o guardar como PDF para no perderlos.");
+            }
         }
     })
     .catch(error => {
-        console.error("Error al enviar los datos a Power Automate:", error);
-        alert("Hubo un problema de conexión al guardar sus datos en la nube. Sus resultados se mostrarán en pantalla, pero le recomendamos imprimir o guardar como PDF para no perderlos.");
-        
-        // Mostrar estado de error en pantalla
+        console.error("Error general en el proceso de envío:", error);
         const statusEl = document.getElementById("cloud-status");
         if (statusEl) {
-            statusEl.innerText = "❌ No se pudo guardar en la nube (error de red). Por favor imprima esta página para guardar sus resultados.";
+            statusEl.innerText = "❌ Error inesperado al procesar el envío. Por favor imprima esta página para guardar sus resultados.";
             statusEl.style.color = "var(--color-nulo)";
             statusEl.style.display = "block";
         }
@@ -417,7 +476,7 @@ function submitAndShowResults() {
         // Ocultar pantalla de carga
         if (loadingScreen) loadingScreen.classList.add("hidden");
         
-        // Mostrar resultados
+        // Mostrar resultados en pantalla
         calculateAndShowResults();
     });
 }

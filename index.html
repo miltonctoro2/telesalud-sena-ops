@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telesalud - Herramienta de Autoevaluación de Competencias OPS</title>
     <!-- CSS Estilos -->
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=3">
     <!-- Carga de las preguntas y la base de datos local -->
-    <script src="questions.js"></script>
+    <script src="questions.js?v=3"></script>
 </head>
 <body>
 
@@ -172,9 +172,9 @@
             </div>
 
             <div style="border-top: 1px solid var(--border-color); padding-top: 25px; margin-top: 20px; display: flex; flex-direction: column; gap: 15px;">
-                <!-- Estado del envío automático a OneDrive -->
+                <!-- Estado del envío automático a Supabase -->
                 <p id="cloud-status" style="font-size: 1rem; color: #166534; font-weight: 600; text-align: center; margin-bottom: 10px; display: none;">
-                    ☁️ Resultados registrados automáticamente en OneDrive (SENA)
+                    ☁️ Resultados registrados automáticamente en la base de datos central (Supabase)
                 </p>
 
                 <!-- Botones de Acción para el usuario final -->
@@ -190,7 +190,7 @@
         <div id="screen-loading" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255,255,255,0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;">
             <div class="spinner spinner-dark" style="width: 50px; height: 50px; border-width: 5px;"></div>
             <h3 style="color: var(--primary); font-weight: 700; font-size: 1.4rem;">Guardando respuestas de forma segura...</h3>
-            <p style="color: var(--text-muted); font-size: 0.95rem;">Por favor, espere un momento. Registrando evaluación en OneDrive institucional.</p>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Por favor, espere un momento. Registrando evaluación en la base de datos central (Supabase).</p>
         </div>
 
     </main>
@@ -202,6 +202,6 @@
     </footer>
 
     <!-- JS de la Lógica de Negocio -->
-    <script src="app.js"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>
