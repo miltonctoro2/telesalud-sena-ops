@@ -583,3 +583,20 @@ footer {
     margin: 0 auto;
     border-top: 1px solid var(--border-color);
 }
+
+/* Admin Table Styles */
+#admin-table {
+    border-collapse: collapse;
+    width: 100%;
+    background-color: var(--bg-card);
+}
+#admin-table th, #admin-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+#admin-table tbody tr:hover {
+    background-color: var(--primary-light);
+}
+#admin-table tbody tr:nth-child(even) {
+    background-color: #fcfdfe;
+}
