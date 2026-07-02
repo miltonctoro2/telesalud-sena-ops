@@ -28,12 +28,53 @@ document.addEventListener("DOMContentLoaded", () => {
     // Inicializar controles de interfaz
     document.getElementById("btn-prev").disabled = true;
 
+    // Cargar instituciones desde Supabase
+    loadInstituciones();
+
     // Verificar si es vista de administrador
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("admin") === "true") {
         showAdminPanel();
     }
 });
+
+// 2b. CARGA DE INSTITUCIONES DESDE SUPABASE
+function loadInstituciones() {
+    const select = document.getElementById("reg-institution");
+    if (!select) return;
+
+    if (!SUPABASE_URL || !SUPABASE_KEY) return;
+
+    fetch(`${SUPABASE_URL}/rest/v1/instituciones?select=nombre&order=nombre.asc`, {
+        method: "GET",
+        headers: {
+            "apikey": SUPABASE_KEY,
+            "Authorization": `Bearer ${SUPABASE_KEY}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("No se pudo cargar instituciones");
+        return response.json();
+    })
+    .then(data => {
+        select.innerHTML = '<option value="" disabled selected>Seleccione la institución</option>';
+        if (data && data.length > 0) {
+            data.forEach(inst => {
+                const opt = document.createElement("option");
+                opt.value = inst.nombre;
+                opt.textContent = inst.nombre;
+                select.appendChild(opt);
+            });
+        }
+    })
+    .catch(() => {
+        // Fallback: opción única para escribir manualmente
+        select.innerHTML = `
+            <option value="" disabled selected>Seleccione la institución</option>
+            <option value="otra">Otra (escriba el nombre)</option>
+        `;
+    });
+}
 
 // 3. FLUJO DE NAVEGACIÓN
 function startAssessment() {
