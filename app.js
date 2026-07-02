@@ -532,6 +532,16 @@ function submitAndShowResults() {
     });
 }
 
+function exitAssessment() {
+    state.answers = {};
+    state.currentDomainIndex = 0;
+    document.getElementById("screen-results").classList.add("hidden");
+    document.getElementById("screen-welcome").classList.remove("hidden");
+    document.getElementById("form-registration").reset();
+    document.getElementById("btn-start").disabled = true;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // Fin de la lógica de autoevaluación.
 
 // 6. PANEL DE ADMINISTRADOR
