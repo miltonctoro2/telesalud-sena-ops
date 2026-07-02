@@ -368,7 +368,11 @@ function renderDomainCharts() {
 }
 
 // 5. INTEGRACIÓN CON NUBE (SUPABASE Y POWER AUTOMATE / ONEDRIVE)
+let isSubmitting = false;
+
 function submitAndShowResults() {
+    if (isSubmitting) return;
+    isSubmitting = true;
     // Recopilar respuestas estructuradas por pregunta
     const detailedAnswers = {};
     preguntas.forEach(q => {
@@ -379,12 +383,12 @@ function submitAndShowResults() {
     // Calcular puntaje total y nivel
     let totalScore = 0;
     preguntas.forEach(q => { totalScore += state.answers[q.id] || 0; });
-    
+
     let finalLevel = "Nulo";
-    if (totalScore >= 195) finalLevel = "Muy Avanzado";
-    else if (totalScore >= 166) finalLevel = "Avanzado";
-    else if (totalScore >= 116) finalLevel = "Intermedio";
-    else if (totalScore >= 65) finalLevel = "Inicial";
+    if (totalScore >= nivelesDesempeno.muyAvanzado.min) finalLevel = nivelesDesempeno.muyAvanzado.nombre;
+    else if (totalScore >= nivelesDesempeno.avanzado.min) finalLevel = nivelesDesempeno.avanzado.nombre;
+    else if (totalScore >= nivelesDesempeno.intermedio.min) finalLevel = nivelesDesempeno.intermedio.nombre;
+    else if (totalScore >= nivelesDesempeno.inicial.min) finalLevel = nivelesDesempeno.inicial.nombre;
 
     // Calcular puntajes por cada dominio
     const scoresPorDominio = {};
@@ -524,6 +528,7 @@ function submitAndShowResults() {
         }
     })
     .finally(() => {
+        isSubmitting = false;
         // Ocultar pantalla de carga
         if (loadingScreen) loadingScreen.classList.add("hidden");
         
@@ -581,12 +586,14 @@ function loadAdminData() {
         return;
     }
 
-    fetch(`${SUPABASE_URL}/rest/v1/respuestas?order=created_at.desc`, {
-        method: "GET",
+    fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_get_respuestas`, {
+        method: "POST",
         headers: {
             "apikey": SUPABASE_KEY,
-            "Authorization": `Bearer ${SUPABASE_KEY}`
-        }
+            "Authorization": `Bearer ${SUPABASE_KEY}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ admin_pwd: ADMIN_PASSWORD })
     })
     .then(response => {
         if (!response.ok) {
