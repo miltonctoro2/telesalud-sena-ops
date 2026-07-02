@@ -42,7 +42,7 @@ CREATE POLICY "Cualquiera puede insertar respuestas" ON respuestas
 
 DROP POLICY IF EXISTS "Solo admin puede leer respuestas" ON respuestas;
 CREATE POLICY "Solo admin puede leer respuestas" ON respuestas
-  FOR SELECT USING (auth.role() = 'service_role');
+  FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Solo admin puede actualizar respuestas" ON respuestas;
 CREATE POLICY "Solo admin puede actualizar respuestas" ON respuestas
