@@ -66,3 +66,13 @@ __pycache__/
 
 # Project reports and backups
 /Autoevaluación_OPS/
+
+# Generated reports and temp files
+*.pdf
+*.csv
+*.xlsx
+crear_plantilla_excel.py
+extract_pdf.py
+resumen_proyecto.md
+screencapture-*
+skills-lock.json
