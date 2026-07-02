@@ -25,7 +25,16 @@
         
         <!-- PANTALLA 1: Registro e Introducción -->
         <section id="screen-welcome" class="card fade-in">
-            <h2>Bienvenido al Cuestionario Digital</h2>
+            <section class="presentation card fade-in">
+  <h2>Presentación</h2>
+  <p>
+    En el marco del proyecto “Respuesta sanitaria vital ante brotes de enfermedades emergentes y reemergentes, violencia y emergencias relacionadas con el clima en Colombia”, liderado por la Organización Panamericana de la Salud (OPS) con la colaboración de Centro de Servicios de Salud del SENA, Central KPO, se implementa el piloto de telemedicina como una estrategia para fortalecer el acceso, la oportunidad y la continuidad de la atención en salud en territorios priorizados.
+  </p>
+  <p>
+    Este formulario tiene como propósito recopilar información sobre las competencias del talento humano que participará en la prestación de servicios de telesalud. Los resultados permitirán identificar brechas, orientar el fortalecimiento de capacidades y apoyar la planificación e implementación del piloto en las instituciones de salud participantes.
+  </p>
+</section>
+<h2>Bienvenido al Cuestionario Digital</h2>
             <p class="intro-text" style="margin-top: 15px;">
                 Esta herramienta interactiva le permitirá realizar un ejercicio introspectivo y crítico acerca de su grado de conocimiento y dominio de las competencias esenciales para los servicios de telesalud, de acuerdo a la escala propuesta por la **OPS/OMS**.
             </p>
@@ -42,7 +51,8 @@
                 </ul>
             </div>
 
-            <!-- Formulario de Datos Personales -->
+            
+<!-- Formulario de Datos Personales -->
             <form id="form-registration" onsubmit="event.preventDefault(); startAssessment();">
                 <h3 style="color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid var(--border-color); padding-bottom: 5px;">Datos de Registro del Profesional</h3>
                 
@@ -75,15 +85,40 @@
                     </div>
                     <div class="form-group">
                         <label for="reg-institution">Institución de Salud *</label>
-                        <input type="text" id="reg-institution" class="form-control" placeholder="Ej. Hospital Regional, Clinica SENA" required>
+                        <select id="reg-institution" class="form-control" required>
+  <option value="" disabled selected>Seleccione la institución</option>
+  <option>Centro de Salud de Puerto Santander</option>
+  <option>Hospital San Francisco de Fortul</option>
+  <option>E.S.E. Hospital San Rafael de San Vicente del Caguan</option>
+  <option>E.S.E. Unidad de Atención en Salud de Guapi</option>
+  <option>(López de Micay) Empresa Social del Estado de Occidente</option>
+  <option>(Timbiquí) Empresa Social del Estado de Occidente</option>
+  <option>CXAYU`CE JXTU Empresa Social del Estado</option>
+  <option>E.S.E. Hospital Eduardo Santos de Istmina</option>
+  <option>Empresa Social del Estado Centro de Salud Nuestra Señora del Carmen</option>
+  <option>E.S.E. Hospital Sagrado Corazón de Jesús</option>
+  <option>E.S.E. Hospital San José de Tierra Alta</option>
+  <option>(San José del Guaviare) E.S.E. Red de Servicios de Primer Nivel</option>
+  <option>E.S.E. Hospital San Rafael</option>
+  <option>E.S.E. Hospital María Angelines</option>
+  <option>E.S.E. Hospital San Agustín</option>
+</select>
                     </div>
                 </div>
 
-                <div style="text-align: right; margin-top: 10px;">
-                    <button type="submit" id="btn-start" class="btn btn-primary">
-                        Comenzar Autoevaluación ➔
-                    </button>
-                </div>
+                <div class="authorization-section" style="margin-top: 15px;">
+  <label class="form-check-label">
+    <input type="checkbox" id="reg-consent" class="form-check-input" onchange="document.getElementById('btn-start').disabled = !this.checked;" required>
+    <strong>Autorización de tratamiento de datos personales</strong><br>
+    Esta autorización se hace en virtud de la Ley Estatutaria 1581 del 2012, mediante la cual se dictan las disposiciones generales para la protección de datos personales.<br>
+    Reconoce que la información que provea en este formulario no será usada para ningún otro propósito fuera realización de investigación científica y de avanzar en el proyecto piloto para Telemedicina.
+  </label>
+</div>
+<div style="text-align: right; margin-top: 10px;">
+  <button type="submit" id="btn-start" class="btn btn-primary" disabled>
+    Comenzar Autoevaluación ➔
+  </button>
+</div>
             </form>
         </section>
 
