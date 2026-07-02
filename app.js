@@ -3,8 +3,8 @@
  */
 
 // 1. CONFIGURACIÓN DE CONEXIÓN CON SUPABASE Y PANEL DE ADMINISTRACIÓN
-const SUPABASE_URL = "https://asemoqatiyguzxviljkm.supabase.co";
-const SUPABASE_KEY = "sb_publishable_t8s31EalnbEsIB5TOCA3KA_fBkkmBnZ";
+const SUPABASE_URL = "https://mouastjayamvgcdfchaq.supabase.co";
+const SUPABASE_KEY = "sb_publishable_U5jS1whHC9qyfstdK1pUSQ_vkXbCRvf";
 const POWER_AUTOMATE_URL = ""; // Dejar vacío para usar únicamente Supabase
 const ADMIN_PASSWORD = "SenaOps2026"; // Contraseña para ingresar al panel administrador (?admin=true)
 
