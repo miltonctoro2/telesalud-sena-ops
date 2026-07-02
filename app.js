@@ -496,14 +496,17 @@ function submitAndShowResults() {
             const sbSuccess = supabaseResult ? supabaseResult.success : false;
 
             if (odSuccess && sbSuccess) {
-                statusEl.innerText = "☁️ Resultados guardados exitosamente en tu Excel de OneDrive y en la base de datos de Supabase.";
+                statusEl.innerText = "☁️ Resultados guardados exitosamente en Supabase y OneDrive.";
                 statusEl.style.color = "var(--color-avanzado)";
             } else if (odSuccess && !sbSuccess) {
-                statusEl.innerText = "☁️ Resultados registrados exitosamente en tu Excel de OneDrive (error al guardar en base de datos secundaria).";
+                statusEl.innerText = "☁️ Resultados registrados en OneDrive (error en base de datos secundaria).";
                 statusEl.style.color = "var(--color-intermedio)";
             } else if (!odSuccess && sbSuccess) {
-                statusEl.innerText = "☁️ Resultados registrados en la base de datos central de Supabase (error al actualizar el archivo Excel de OneDrive).";
-                statusEl.style.color = "var(--color-intermedio)";
+                const msg = POWER_AUTOMATE_URL
+                    ? "☁️ Resultados registrados en Supabase (error al enviar a OneDrive)."
+                    : "☁️ Resultados guardados exitosamente en la base de datos de Supabase.";
+                statusEl.innerText = msg;
+                statusEl.style.color = "var(--color-avanzado)";
             } else {
                 statusEl.innerText = "❌ No se pudo guardar en la nube (error de conexión). Por favor, imprima esta página para no perder sus resultados.";
                 statusEl.style.color = "var(--color-nulo)";
