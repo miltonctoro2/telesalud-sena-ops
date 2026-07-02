@@ -586,14 +586,12 @@ function loadAdminData() {
         return;
     }
 
-    fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_get_respuestas`, {
-        method: "POST",
+    fetch(`${SUPABASE_URL}/rest/v1/respuestas?order=created_at.desc`, {
+        method: "GET",
         headers: {
             "apikey": SUPABASE_KEY,
-            "Authorization": `Bearer ${SUPABASE_KEY}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ admin_pwd: ADMIN_PASSWORD })
+            "Authorization": `Bearer ${SUPABASE_KEY}`
+        }
     })
     .then(response => {
         if (!response.ok) {

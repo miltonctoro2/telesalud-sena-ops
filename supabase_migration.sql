@@ -42,27 +42,10 @@ CREATE POLICY "Cualquiera puede insertar respuestas" ON respuestas
 
 DROP POLICY IF EXISTS "Solo admin puede leer respuestas" ON respuestas;
 CREATE POLICY "Solo admin puede leer respuestas" ON respuestas
-  FOR SELECT USING (auth.role() = 'service_role');
+  FOR SELECT USING (true);
 
--- Función RPC segura para el panel de administración
--- Valida la contraseña antes de devolver datos
-CREATE OR REPLACE FUNCTION admin_get_respuestas(admin_pwd TEXT)
-RETURNS JSON
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  IF admin_pwd = 'SenaOps2026' THEN
-    RETURN (
-      SELECT COALESCE(json_agg(row_to_json(t) ORDER BY t.created_at DESC), '[]'::json)
-      FROM (SELECT * FROM respuestas) t
-    );
-  ELSE
-    RETURN '[]'::json;
-  END IF;
-END;
-$$;
+-- NOTA: La función RPC admin_get_respuestas fue eliminada.
+-- El panel admin ahora consulta directo via REST con la anon key.
 
 -- 2. TABLA DE INSTITUCIONES
 CREATE TABLE IF NOT EXISTS instituciones (
